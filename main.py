@@ -94,11 +94,15 @@ def search(query, start=0):
                         ]))
     print("Страница {} из {}".format(res['start']//50, res['results_count']//50))
 
-    x = input("'d<ID>' загрузить '<ID>' открыть 'nn' след. 'pp' пред.: ")
+    x = input("'d<ID>' загрузить 'm<ID>' magnet ссылка '<ID>' открыть 'nn' след. 'pp' пред.: ")
     if 'd' in x:
         id_of = x.split('d')[1].strip()
         selected_torrent = res['results'][int(id_of)]
         rp.dl_torrent(selected_torrent, LOAD_DIR)
+    elif 'm' in x:
+        id_of = x.split('m')[1].strip()
+        selected_torrent = res['results'][int(id_of)]
+        print(rp.get_magnet_link(selected_torrent['torrent_link']))
     elif x == 'nn':
         if res['results_count'] != start:
             search(query, start + 50)

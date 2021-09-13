@@ -148,3 +148,9 @@ class RutrackerParser:
         r = self.session.get(self.get_torrent_link(torrent['torrent_link']))
         with open(path.join(pth, '{}.torrent'.format(torrent['torrent_name'])), 'wb') as torrent_file:
             torrent_file.write(r.content)
+            
+    def get_magnet_link(self, topic_link: str) -> str:
+        r = self.session.get('https://rutracker.org/forum/{}'.format(topic_link))
+        soup = BeautifulSoup(r.text, 'html.parser')
+        magnet_link = soup.find('a', {'class': 'magnet-link'})['href'].split("&")[0]
+        return magnet_link
