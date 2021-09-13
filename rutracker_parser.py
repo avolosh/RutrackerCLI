@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from typing import List, TypedDict
 from os import path
 
+proxies = {"http": "https://185.42.60.242:8080"}
 
 class TorrentInfo(TypedDict):
     topic_name:     str
@@ -17,6 +18,7 @@ class TorrentInfo(TypedDict):
     leeches:        str
     download_count: str
     created_at:     str
+    tracker:        str
 
 
 class OverallInfo(TypedDict):
@@ -42,7 +44,7 @@ class RutrackerParser:
             self.session.cookies.update(pickle.load(open(self.cookie_fp, 'rb')))
 
     def is_logged_in(self) -> bool:
-        r = self.session.get(self.base_url)
+        r = self.session.get(self.base_url, proxies=proxies)
         if BeautifulSoup(r.text, 'html.parser').find("a", {'id': 'logged-in-username'}) is None:
             return False
         else:
@@ -88,7 +90,7 @@ class RutrackerParser:
             return 'OK'
 
     def search(self, query, start=0) -> OverallInfo:
-        r = self.session.get(self.base_url, params={'nm': query, 'start': start})
+        r = self.session.get(self.base_url, params={'nm': query, 'start': start}, proxies=proxies)
         r.encoding = 'windows-1251'
         soup = BeautifulSoup(r.text, 'html.parser')
         body = soup.find('table', {'id': 'tor-tbl'}).find('tbody')
@@ -127,7 +129,8 @@ class RutrackerParser:
                     seeds=seeds.strip(),
                     leeches=leeches.strip(),
                     download_count=download_count.strip(),
-                    created_at=created_at.strip().replace('\n', ' ')
+                    created_at=created_at.strip().replace('\n', ' '),
+                    tracker = 'rutracker'.strip()
                 )
 
                 search_results.append(serialized)
@@ -139,18 +142,18 @@ class RutrackerParser:
         )
 
     def get_torrent_link(self, topic_link: str) -> str:
-        r = self.session.get('https://rutracker.org/forum/{}'.format(topic_link))
+        r = self.session.get('https://rutracker.org/forum/{}'.format(topic_link), proxies=proxies)
         soup = BeautifulSoup(r.text, 'html.parser')
         part_link = soup.find('a', {'class': 'dl-link'})['href']
         return 'https://rutracker.org/forum/{}'.format(part_link)
 
     def dl_torrent(self, torrent: TorrentInfo, pth: str):
-        r = self.session.get(self.get_torrent_link(torrent['torrent_link']))
-        with open(path.join(pth, '{}.torrent'.format(torrent['torrent_name'])), 'wb') as torrent_file:
+        r = self.session.get(self.get_torrent_link(torrent['torrent_link']), proxies=proxies)
+        with open(path.join(pth, '{}.torrent'.format(torrent['torrent_name'].replace("/","-"))), 'wb') as torrent_file:
             torrent_file.write(r.content)
-            
+
     def get_magnet_link(self, topic_link: str) -> str:
-        r = self.session.get('https://rutracker.org/forum/{}'.format(topic_link))
+        r = self.session.get('https://rutracker.org/forum/{}'.format(topic_link), proxies=proxies)
         soup = BeautifulSoup(r.text, 'html.parser')
         magnet_link = soup.find('a', {'class': 'magnet-link'})['href'].split("&")[0]
         return magnet_link

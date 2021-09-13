@@ -1,6 +1,7 @@
 import webbrowser
 
 from rutracker_parser import RutrackerParser
+from rutor_parser import RutorParser
 import os
 import argparse
 from typing import List
@@ -50,7 +51,7 @@ def make_row(data: List[str]):
         sb += fill(data[7], 20) + sep
         return sb
     else:
-        sb = 'ID: {0}\nТопик: {1}\nНазвание: {2}\nРазмер: {3}\nСиды: {4}\nЛичи: {5}\nСкачано: {6} раз(а)\nСоздано: {7}'.format(
+        sb = 'ID: {0}\nТопик: {1}\nНазвание: {2}\nРазмер: {3}\nСиды: {4}\nЛичи: {5}\nСкачано: {6} раз(а)\nСоздано: {7}\nТрекер: {8}'.format(
             *data
         )
         sb += get_strip()
@@ -78,9 +79,14 @@ def search(query, start=0):
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Поиск...")
     res = rp.search(query)
+    # res.update(ru.search(query))
+
+    # res = rp.search(query).copy()
+    # res.update(ru.search(query))
+
 
     if args.minify:
-        print(make_row(['#', 'Топик', 'Название', 'Размер', 'Сиды', 'Личи', 'Загружено', 'Создано']))
+        print(make_row(['#', 'Топик', 'Название', 'Размер', 'Сиды', 'Личи', 'Загружено', 'Создано', 'Трекер']))
 
     for i, result in enumerate(res['results']):
         print(make_row([str(i),
@@ -90,7 +96,8 @@ def search(query, start=0):
                         result['seeds'],
                         result['leeches'],
                         result['download_count'],
-                        result['created_at']
+                        result['created_at'],
+                        result['tracker']
                         ]))
     print("Страница {} из {}".format(res['start']//50, res['results_count']//50))
 
@@ -125,4 +132,5 @@ if __name__ == '__main__':
     print("Rutracker.org CLI")
     print("Инициализация")
     rp = RutrackerParser()
+    ru = RutorParser()
     main()
